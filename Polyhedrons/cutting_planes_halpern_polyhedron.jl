@@ -673,7 +673,7 @@ Finds a point x in the intersection of elipsoids (y_i,Q_i,k_i) using cimmino pro
 function solve_cimmino_halpern(x0::AbstractVector, y::AbstractMatrix, Q::AbstractArray, env::Gurobi.Env,
     epsilon::Real, target::AbstractVector, mt::Bool=false)
     x = copy(x0)
-    iter = 0
+    iter = 1
     violation = []
 
     t_start = time()
@@ -711,7 +711,7 @@ function solve_sc_crm_halpern(x0::AbstractVector, y::AbstractMatrix, Q::Abstract
     env::Gurobi.Env, epsilon::Real, target::AbstractVector)
     x = copy(x0)
     k, _, _ = size(Q)
-    iter = 0
+    iter = 1
     violation = []
 
     t_start = time()
@@ -771,7 +771,7 @@ function solve_crm_halpern(x0::AbstractVector, y::AbstractMatrix, Q::AbstractArr
     env::Gurobi.Env, epsilon::Real, target::AbstractVector)
     x = copy(x0)
     k, _, n = size(Q)
-    iter = 0
+    iter = 1
     z = repeat(x, k)
     z0 = copy(z)
     violation = []
@@ -867,7 +867,7 @@ function test_cutting_plane2(n::UInt)
     println("\tCRM: $time_crm s, iter = $iter_crm, violation = $(violation_crm[end])")
 end
 
-
+using BenchmarkTools
 
 function test_cutting_plane(k::UInt, n::UInt, m::UInt, max_iter::UInt, alpha::Real)
     env = Gurobi.Env()
@@ -891,28 +891,40 @@ function test_cutting_plane(k::UInt, n::UInt, m::UInt, max_iter::UInt, alpha::Re
 
 
 
+  
+    @info "Running A3PM..."
     # x_a3pm, violation_a3pm, iter_a3pm, time_a3pm = solve_a3pm_halpern(x0, y, Q, k, ϵ, target)
-    x_a3pm, violation_a3pm, iter_a3pm, time_a3pm = solve_a3pm_halpern(x0, y, Q, ϵ, target)
+    x_a3pm, violation_a3pm, iter_a3pm, _ = solve_a3pm_halpern(x0, y, Q, ϵ, target)
+    time_a3pm = @belapsed solve_a3pm_halpern($x0, $y, $Q, $ϵ, $target)
     @show violation_a3pm[end], time_a3pm, iter_a3pm
 
-
+    @info "Running Alternating Projections..."
     # time_alt_proj = @elapsed x_alt_proj, violation_alt, iter_alt = solve_alt_proj_halpern(x0, y, Q, k, env, 0.1, target)
-    x_alt_proj, violation_alt, iter_alt, time_alt_proj = solve_alt_proj_halpern(x0, y, Q, env, ϵ, target)
+    x_alt_proj, violation_alt, iter_alt, _  = solve_alt_proj_halpern(x0, y, Q, env, ϵ, target)
+    time_alt_proj = @belapsed solve_alt_proj_halpern($x0, $y, $Q, $env, $ϵ, $target)
     @show violation_alt[end], time_alt_proj, iter_alt
 
+    @info "Running Cimmino..."
     # time_cimmino = @elapsed x_cimmino, violation_cimmino, iter_cimmino = solve_cimmino_halpern(x0, y, Q, k, env, ϵ, target)
-    x_cimmino, violation_cimmino, iter_cimmino, time_cimmino = solve_cimmino_halpern(x0, y, Q, env, ϵ, target)
+    x_cimmino, violation_cimmino, iter_cimmino, _ = solve_cimmino_halpern(x0, y, Q, env, ϵ, target)
+    time_cimmino = @belapsed solve_cimmino_halpern($x0, $y, $Q, $env, $ϵ, $target)
     @show violation_cimmino[end], time_cimmino, iter_cimmino
 
+    @info "Running SC CRM..."
     # x_sccrm, violation_sccrm, iter_sccrm, time_sccrm = solve_sc_crm_halpern(x0, y, Q, k, env, 0.1, target)
-    x_sccrm, violation_sccrm, iter_sccrm, time_sccrm = solve_sc_crm_halpern(x0, y, Q, env, ϵ, target)
+    x_sccrm, violation_sccrm, iter_sccrm, _ = solve_sc_crm_halpern(x0, y, Q, env, ϵ, target)
+    time_sccrm = @belapsed solve_sc_crm_halpern($x0, $y, $Q, $env, $ϵ, $target)
     @show violation_sccrm[end], time_sccrm, iter_sccrm
 
-    x_crm, violation_crm, iter_crm, time_crm = solve_crm_halpern(x0, y, Q, env, ϵ, target)
+    @info "Running CRM..."
+    x_crm, violation_crm, iter_crm, _ = solve_crm_halpern(x0, y, Q, env, ϵ, target)
+    time_crm = @belapsed solve_crm_halpern($x0, $y, $Q, $env, $ϵ, $target)
     @show violation_crm[end], time_crm, iter_crm
 
     # x_dijkstra, violation_dijkstra, iter_dijkstra, time_dijkstra = solve_dijkstra(x0, 0.1, y, Q, k, env, target)
-    x_dijkstra, violation_dijkstra, iter_dijkstra, time_dijkstra = solve_dijkstra(x0, ϵ, y, Q, env, target)
+    x_dijkstra, violation_dijkstra, iter_dijkstra, _ = solve_dijkstra(x0, ϵ, y, Q, env, target)
+    @info "Running Dijkstra..."
+    time_dijkstra = @belapsed solve_dijkstra($x0, $ϵ, $y, $Q, $env, $target)
     @show violation_dijkstra[end], time_dijkstra, iter_dijkstra
 
     println("\tA3PM: $time_a3pm s, iter = $iter_a3pm, violation = $(violation_a3pm[end])")
@@ -964,9 +976,9 @@ function main()
     # ns = [2, 10, 10, 10, 10, 20, 100]
     # ms = [2, 10, 10, 10, 10, 20, 100]
     # ks = [2, 3, 5, 10, 20, 20, 20]
-    ns = [50]
+    ns = [10]
     ms = [10]
-    ks = [10]
+    ks = [5]
 
     # for i in eachindex(ns)
     #     n = ns[i]
