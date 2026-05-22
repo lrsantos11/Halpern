@@ -12,6 +12,7 @@ println("Num threads: ", nthreads())
 using Printf
 
 const EPS = 1e-5
+# set JULIA_NUM_THREADS=12
 const mt = true
 
 
@@ -1026,6 +1027,8 @@ function test_cutting_plane(n::UInt, m::UInt, max_iter::UInt, alpha::Real)
 	# p2 = plot()
 
 	x_3pm, violation_3pm, iter_3pm, time_3pm = solve_3pm_halpern(x0, y, Q, k, max_iter, env, ϵ, target)
+
+
 	@show violation_3pm[end]
 	# plot!(p2, 1:length(violation_3pm), violation_3pm, label = "3PM", lw = 2)
 	# if n == 2

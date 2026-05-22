@@ -967,7 +967,8 @@ function test_cutting_plane(k::UInt, n::UInt, m::UInt, max_iter::UInt, alpha::Re
 	target = projection_intersection_polyhedron(x0, y, Q, 0.1, env)
 	println("\tTarget found!")
 
-	x_a3pm, violation_a3pm, iter_a3pm, time_a3pm = solve_3pm_halpern(x0, y, Q, k, ϵ, target, true)
+
+	x_a3pm, violation_a3pm, iter_a3pm, time_a3pm = solve_a3pm_halpern(x0, y, Q, ϵ, target, true)
 
 	x_3pm, violation_3pm, iter_3pm, time_3pm = solve_3pm_halpern(x0, y, Q, max_iter, env, ϵ, target)
 	@show violation_3pm[end], time_3pm, iter_3pm
